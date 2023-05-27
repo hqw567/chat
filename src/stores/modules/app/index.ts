@@ -1,34 +1,46 @@
 import { defineStore } from 'pinia'
-import type { AppState, Language, Theme } from './helper'
-import { getLocalSetting, setLocalSetting } from './helper'
-import { store } from '@/stores'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-export const useAppStore = defineStore('app-store', {
-  state: (): AppState => getLocalSetting(),
-  actions: {
-    setSiderCollapsed(collapsed: boolean) {
-      this.siderCollapsed = collapsed
-      this.recordState()
-    },
+function isMobile() {
+  return window.innerWidth <= 1024
+}
 
-    setTheme(theme: Theme) {
-      this.theme = theme
-      this.recordState()
-    },
+export const useAppStore = defineStore('appStore', () => {
+  const isMobileMenu = ref(isMobile())
+  const isMenuOpen = ref(!isMobileMenu.value)
+  const isMenuOpening = ref(false)
+  const isMenuClosing = ref(false)
 
-    setLanguage(language: Language) {
-      if (this.language !== language) {
-        this.language = language
-        this.recordState()
-      }
-    },
-
-    recordState() {
-      setLocalSetting(this.$state)
+  watch(isMenuOpen, (value) => {
+    if (value) {
+      isMenuOpening.value = true
+      setTimeout(() => {
+        isMenuOpening.value = false
+      }, 300)
+      return
     }
+    isMenuClosing.value = true
+    setTimeout(() => {
+      isMenuClosing.value = false
+    }, 300)
+  })
+
+  onMounted(() => {
+    window.addEventListener('resize', onResize)
+  })
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('resize', onResize)
+  })
+
+  function onResize() {
+    isMobileMenu.value = isMobile()
+  }
+
+  return {
+    isMobileMenu,
+    isMenuOpen,
+    isMenuOpening,
+    isMenuClosing,
   }
 })
-
-export function useAppStoreWithOut() {
-  return useAppStore(store)
-}
