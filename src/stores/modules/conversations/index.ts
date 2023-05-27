@@ -6,7 +6,7 @@ export const useConversationsStore = defineStore('conversations-store', () => {
   const newConversationCounter = ref(0)
   const conversations: any = useLocalStorage('conversations/v1', {})
   const currentConversationId = ref('')
-  const processingController = ref(null)
+  const processingController = ref<AbortController | null>()
 
   const currentConversation = computed(() => {
     if (!currentConversationId.value)

@@ -2,9 +2,24 @@ import { useLocalStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 
+
+export type TPresets = IPresets[]
+
+export interface IPresets {
+  name: string
+  client: string
+  options: IPresetsOptions
+  createdAt: number
+}
+
+export interface IPresetsOptions {
+  toneStyle: string
+}
+type LocalStorageResult<T> = [T, (value: T) => void]
+
 export const usePresetsStore = defineStore('presetsStore', () => {
-  const presets: any = useLocalStorage('presetsStore/presets', [])
-  const activePresetName: any = useLocalStorage('presetsStore/activePresetName', 'chatgpt')
+  const presets: LocalStorageResult<TPresets> = useLocalStorage<TPresets>('presetsStore/presets',[])
+  const activePresetName: string = useLocalStorage<string>('presetsStore/activePresetName', 'chatgpt')
   const activePreset = computed(() => getPreset(activePresetName.value))
 
   function setActivePresetName(name: string) {

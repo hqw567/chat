@@ -64,13 +64,13 @@ const { updateConversation } = conversationsStore
 
 const isClientDropdownOpen = ref(false)
 const isClientSettingsModalOpen = ref(false)
-const clientSettingsModalClient = ref(null)
-const clientSettingsModalPresetName = ref(null)
+const clientSettingsModalClient = ref<string>()
+const clientSettingsModalPresetName = ref<string>()
 
-const messagesContainerElement = ref(null)
-const inputContainerElement = ref(null)
-const inputTextElement = ref(null)
-const chatButtonsContainerElement = ref(null)
+const messagesContainerElement = ref<HTMLElement>()
+const inputContainerElement = ref<HTMLElement>()
+const inputTextElement = ref<HTMLElement>()
+const chatButtonsContainerElement = ref<HTMLElement>()
 
 const activePresetNameToUse = computed(
   () => currentConversation.value?.activePresetName || activePresetName.value,
@@ -120,6 +120,8 @@ const inputRows = computed(() => {
 })
 
 function scrollToBottom() {
+  if (!messagesContainerElement.value)
+    return
   messagesContainerElement.value.scrollTop
     = messagesContainerElement.value.scrollHeight
 }
@@ -133,11 +135,11 @@ function stopProcessing() {
 }
 
 function setChatContainerHeight() {
-  const headerElementHeight = document.querySelector('header').offsetHeight
-  const footerElementHeight = document.querySelector('footer').offsetHeight
-  const inputContainerElementHeight = inputContainerElement.value.offsetHeight
+  const headerElementHeight = document.querySelector('header')?.offsetHeight || 0
+  const footerElementHeight = document.querySelector('footer')?.offsetHeight|| 0
+  const inputContainerElementHeight = inputContainerElement.value?.offsetHeight ||0
   const chatButtonsContainerElementHeight
-    = chatButtonsContainerElement.value.offsetHeight
+    = chatButtonsContainerElement.value?.offsetHeight || 0
   const heightOffset
     = window.document.documentElement.clientHeight - window.innerHeight
   const containerHeight
@@ -148,13 +150,15 @@ function setChatContainerHeight() {
     - chatButtonsContainerElementHeight
     - 50
   // set container height
+  if (messagesContainerElement.value)
   messagesContainerElement.value.style.height = `${containerHeight}px`
   // move input container element bottom down
+  if (inputContainerElement.value)
   inputContainerElement.value.style.bottom = `${heightOffset}px`
   scrollToBottom()
 }
 
-async function sendMessage(input, parentMessageId = null) {
+async function sendMessage(input: string, parentMessageId = null) {
   if (processingController.value)
     return
 
@@ -313,7 +317,7 @@ async function sendMessage(input, parentMessageId = null) {
     )
     nextTick().then(() => {
       setChatContainerHeight()
-      inputTextElement.value.focus()
+      inputTextElement.value?.focus()
     })
   }
   if (!stream) {
@@ -351,7 +355,7 @@ async function sendMessage(input, parentMessageId = null) {
     await fetchEventSource(`${VITE_API_BASE_URL}/conversation`, {
       ...opts,
       openWhenHidden: true,
-      signal: processingController.value.signal,
+      signal: processingController.value?.signal,
       onopen(response) {
         if (response.status === 200)
           return
@@ -371,7 +375,7 @@ async function sendMessage(input, parentMessageId = null) {
       onmessage(eventMessage) {
 
         if (eventMessage.data === '[DONE]') {
-          processingController.value.abort()
+          processingController.value?.abort()
           return
         }
         if (eventMessage.event === 'result') {
@@ -401,15 +405,15 @@ async function sendMessage(input, parentMessageId = null) {
   }
   finally {
     if (!processingController.value?.signal.aborted)
-      processingController.value.abort()
+      processingController.value?.abort()
 
     processingController.value = null
     await nextTick()
-    inputTextElement.value.focus()
+    inputTextElement.value?.focus()
   }
 }
 
-function parseMarkdown(text, streaming = false) {
+function parseMarkdown(text: string, streaming = false) {
   text = text.trim()
   let cursorAdded = false
   // workaround for incomplete code, closing the block if it's not closed
@@ -451,20 +455,30 @@ function parseMarkdown(text, streaming = false) {
   }
 }
 
-function setIsClientSettingsModalOpen(isOpen,
-  client = null,
-  presetName = null) {
+function setIsClientSettingsModalOpen(isOpen: boolean,
+  client = '',
+  presetName = '') {
   isClientSettingsModalOpen.value = isOpen
   console.log(isClientSettingsModalOpen.value)
   clientSettingsModalClient.value = client
   clientSettingsModalPresetName.value = presetName || client
 }
 
+interface Root {
+  id: string
+  parentMessageId: boolean
+  text: string
+  role: string
+}
+
+
 function getMessagesForConversation(
-  conversationMessages,
-  parentMessageId,
+  conversationMessages: any[],
+  parentMessageId: string,
   conversationOrderedMessages = [],
 ) {
+  console.log(conversationMessages);
+
   // Check if parent message id is valid
   if (parentMessageId) {
     // Find the message object that matches parent message id asynchronously
@@ -485,34 +499,38 @@ function getMessagesForConversation(
   return conversationOrderedMessages
 }
 
-function copyButtonListener(e) {
+
+function copyButtonListener(e: MouseEvent) {
   // check parent elements for `data-is-copy-button` attribute
-  let el = e.target
+  let el = e.target as HTMLElement;
   while (el) {
     if (el.dataset.isCopyButton) {
       // get sibling code block text
-      const codeBlock = el.parentElement.querySelector('code')
-      if (!codeBlock)
-        return
+      const codeBlock = el.parentElement?.querySelector('code');
+      if (!codeBlock) {
+        return;
+      }
 
       // copy text to clipboard
-      navigator.clipboard.writeText(codeBlock.innerText)
+      navigator.clipboard.writeText(codeBlock.innerText);
+
       // find child element with class `copy-status`
-      const copyStatus = el.querySelector('.copy-status')
+      const copyStatus = el.querySelector('.copy-status') as HTMLElement;
       if (copyStatus) {
         // set text to "Copied"
-        copyStatus.innerText = 'Copied'
+        copyStatus.innerText = 'Copied';
         setTimeout(() => {
-          if (!copyStatus)
-            return
+          if (!copyStatus) {
+            return;
+          }
 
           // set text back to "Copy"
-          copyStatus.innerText = 'Copy'
-        }, 3000)
+          copyStatus.innerText = 'Copy';
+        }, 3000);
       }
-      return
+      return;
     }
-    el = el.parentElement
+    el = el.parentElement!;
   }
 }
 

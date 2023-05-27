@@ -26,7 +26,10 @@ const props = defineProps({
 
 const presetsStore = usePresetsStore()
 const { presets } = storeToRefs(presetsStore)
-const customPresets: any = computed(() => presets.value.filter((preset: any) => !['OpenAI API', 'ChatGPT', 'Bing'].includes(preset.name)))
+console.log(presets);
+
+const customPresets = computed(() => presets.value.filter((preset: any) => !['OpenAI API', 'ChatGPT', 'Bing'].includes(preset.name)))
+console.log(customPresets);
 
 function setClientToUseHandler(clientName: string) {
   if (props.canChangePreset)
@@ -136,7 +139,7 @@ onMounted(() => {
           <i-ant-design-setting-filled class="w-5 h-5 text-white/70" name="bx:bxs-cog" />
         </button>
       </div>
-      <div
+      <!-- <div
         v-for="preset in customPresets"
         :key="preset.name"
         class="w-full flex flex-row"
@@ -150,6 +153,7 @@ onMounted(() => {
           }"
           @click="setClientToUseHandler(preset.name)"
         >
+        {{ preset }}
           <i-ri-openai-fill
             v-if="preset.client === 'chatgpt'"
             class="h-9 py-2 pr-2 rounded-lg"
@@ -171,7 +175,7 @@ onMounted(() => {
         >
           <i-ant-design-setting-filled class="w-5 h-5 text-white/70" name="bx:bxs-cog" />
         </button>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
